@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "423224857093",
+    "firebase_url": "https://getsocial-flutter-sdk-demo.firebaseio.com",
+    "project_id": "getsocial-flutter-sdk-demo",
+    "storage_bucket": "getsocial-flutter-sdk-demo.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:423224857093:android:6cbf2bd7d6fb3641f4c26c",
+        "android_client_info": {
+          "package_name": "im.getsocial.flutter.demo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "423224857093-8lba0dj1qg8605scou0tfppgk3838hpj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLslyvYepT8YK1afYqkR4G_cR10bzUo18"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "423224857093-8lba0dj1qg8605scou0tfppgk3838hpj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

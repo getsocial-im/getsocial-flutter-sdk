@@ -1,0 +1,5 @@
+example/.idea
+example/android/.idea
+example/.dart_tool
+example/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata
+example/ios/Runner.xcworkspace/xcshareddata
