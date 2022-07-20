@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:getsocial_example/main.dart';
 import 'package:getsocial_flutter_sdk/getsocial_flutter_sdk.dart';
 import 'common.dart';
-import 'package:platform_action_sheet/platform_action_sheet.dart';
+import 'platform_action_sheet.dart';
 
 class Followers extends StatefulWidget {
   @override
@@ -10,12 +10,12 @@ class Followers extends StatefulWidget {
 }
 
 class FollowersState extends State<Followers> {
-  static FollowersQuery query;
+  static FollowersQuery? query;
 
   List<User> users = [];
   List<String> followedUsers = [];
   List<String> friends = [];
-  CurrentUser currentUser;
+  CurrentUser? currentUser;
 
   @override
   void initState() {
@@ -81,7 +81,7 @@ class FollowersState extends State<Followers> {
       onPressed: () => {Navigator.pop(context), showDetail(index)},
       hasArrow: true,
     ));
-    if (currentUser.userId != users[index].userId) {
+    if (currentUser?.userId != users[index].userId) {
       actions.add(ActionSheetAction(
         text: (friends.contains(users[index].userId)
             ? 'Remove Friend'
@@ -116,12 +116,12 @@ class FollowersState extends State<Followers> {
 
   showActionSheet(int index) async {
     PlatformActionSheet()
-        .displaySheet(context: context, actions: generateActions(index));
+        .displaySheet(context, Text(''), Text(''), generateActions(index));
   }
 
   executeSearch() async {
     users = [];
-    Communities.getFollowers(PagingQuery(FollowersState.query))
+    Communities.getFollowers(PagingQuery(FollowersState.query!))
         .then((value) {
           this.setState(() {
             users = value.entries;
@@ -155,7 +155,9 @@ class FollowersState extends State<Followers> {
           });
         }
       });
-    }).catchError((error) => showError(context, error.toString()));
+    }).catchError((error) {
+      showError(context, error.toString());
+    });
   }
 
   loadFollowStatus(List<String> userIds) async {
@@ -179,21 +181,25 @@ class FollowersState extends State<Followers> {
           });
         }
       });
-    }).catchError((error) => showError(context, error.toString()));
+    }).catchError((error) {
+      showError(context, error.toString());
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    buildContextList.add(context);
     return Column(
       children: [
         Container(
-            child: new FlatButton(
+            child: new TextButton(
               onPressed: () {
                 buildContextList.removeLast();
                 Navigator.pop(context);
               },
               child: new Text('< Back'),
-              color: Colors.white,
+              style: TextButton.styleFrom(
+                  backgroundColor: Colors.blue, primary: Colors.white),
             ),
             decoration: new BoxDecoration(
                 color: Colors.white,
@@ -210,10 +216,12 @@ class FollowersState extends State<Followers> {
                           Expanded(
                             child: Text(user.displayName),
                           ),
-                          FlatButton(
+                          TextButton(
                             onPressed: () => showActionSheet(index),
                             child: Text('Actions'),
-                            color: Colors.blue,
+                            style: TextButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                primary: Colors.white),
                           ),
                         ],
                       ),

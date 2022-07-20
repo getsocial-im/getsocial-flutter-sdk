@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:getsocial_example/chatmessages.dart';
 import 'package:getsocial_example/followers.dart';
 import 'package:getsocial_example/friends.dart';
 import 'package:getsocial_flutter_sdk/getsocial_flutter_sdk.dart';
-import 'common.dart';
-import 'package:platform_action_sheet/platform_action_sheet.dart';
 
-import 'feed.dart';
+import 'activities.dart';
+import 'common.dart';
 import 'main.dart';
+import 'platform_action_sheet.dart';
 
 class Users extends StatefulWidget {
   @override
@@ -15,15 +16,15 @@ class Users extends StatefulWidget {
 
 class UsersState extends State<Users> {
   List<User> users = [];
-  String searchText;
+  late String searchText = '';
   List<String> followedUsers = [];
   List<String> friends = [];
-  CurrentUser currentUser;
+  CurrentUser? currentUser;
 
   @override
   void initState() {
     getCurrentUser();
-
+    executeSearch();
     super.initState();
   }
 
@@ -77,6 +78,20 @@ class UsersState extends State<Users> {
         .catchError((error) => showError(context, error.toString()));
   }
 
+  unblockUser(int index) {
+    var userId = users[index].userId;
+    Communities.unblockUsers(UserIdList.create([userId]))
+        .then((result) => showAlert(context, 'Success', 'User unblocked'))
+        .catchError((error) => showError(context, error.toString()));
+  }
+
+  blockUser(int index) {
+    var userId = users[index].userId;
+    Communities.blockUsers(UserIdList.create([userId]))
+        .then((result) => showAlert(context, 'Success', 'User blocked'))
+        .catchError((error) => showError(context, error.toString()));
+  }
+
   List<ActionSheetAction> generateActions(int index) {
     List<ActionSheetAction> actions = [];
     actions.add(ActionSheetAction(
@@ -84,7 +99,7 @@ class UsersState extends State<Users> {
       onPressed: () => {Navigator.pop(context), showDetail(index)},
       hasArrow: true,
     ));
-    if (currentUser.userId != users[index].userId) {
+    if (currentUser?.userId != users[index].userId) {
       actions.add(ActionSheetAction(
         text: (friends.contains(users[index].userId)
             ? 'Remove Friend'
@@ -107,6 +122,20 @@ class UsersState extends State<Users> {
               : followUser(index);
         },
       ));
+      actions.add(ActionSheetAction(
+        text: 'Block',
+        onPressed: () {
+          Navigator.pop(context);
+          blockUser(index);
+        },
+      ));
+      actions.add(ActionSheetAction(
+        text: 'Unblock',
+        onPressed: () {
+          Navigator.pop(context);
+          unblockUser(index);
+        },
+      ));
     }
     actions.add(ActionSheetAction(
       text: "Show followers",
@@ -127,10 +156,28 @@ class UsersState extends State<Users> {
     actions.add(ActionSheetAction(
       text: "User's feed",
       onPressed: () {
-        FeedState.query =
+        ActivitiesState.query =
             ActivitiesQuery.feedOf(UserId.create(users[index].userId));
-        FeedState.isComment = false;
-        Navigator.pushNamed(context, "/feed");
+        ActivitiesState.isComment = false;
+        Navigator.pushNamed(context, "/activities");
+      },
+    ));
+    actions.add(ActionSheetAction(
+      text: "User's mentions",
+      onPressed: () {
+        ActivitiesState.query = ActivitiesQuery.everywhere()
+            .withMentions([UserId.create(users[index].userId)]);
+        ActivitiesState.isComment = false;
+        ActivitiesState.showSearch = false;
+        Navigator.pushNamed(context, "/activities");
+      },
+    ));
+    actions.add(ActionSheetAction(
+      text: "Open Chat",
+      onPressed: () {
+        ChatMessagesState.chatId =
+            ChatId.createWithUserId(UserId.create(users[index].userId));
+        Navigator.pushNamed(context, "/chatmessages");
       },
     ));
     actions.add(ActionSheetAction(
@@ -144,11 +191,15 @@ class UsersState extends State<Users> {
 
   showActionSheet(int index) async {
     PlatformActionSheet()
-        .displaySheet(context: context, actions: generateActions(index));
+        .displaySheet(context, Text(''), Text(''), generateActions(index));
   }
 
   executeSearch() async {
-    UsersQuery query = UsersQuery.find(searchText);
+    UsersQuery query = UsersQuery.suggested();
+    if (searchText.isNotEmpty) {
+      query = UsersQuery.find(searchText);
+    }
+
     Communities.findUsers(PagingQuery(query))
         .then((value) {
           if (value.entries.isEmpty) {
@@ -183,7 +234,9 @@ class UsersState extends State<Users> {
           });
         }
       });
-    }).catchError((error) => showError(context, error.toString()));
+    }).catchError((error) {
+      showError(context, error.toString());
+    });
   }
 
   loadFollowStatus(List<String> userIds) async {
@@ -207,21 +260,25 @@ class UsersState extends State<Users> {
           });
         }
       });
-    }).catchError((error) => showError(context, error.toString()));
+    }).catchError((error) {
+      showError(context, error.toString());
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    buildContextList.add(context);
     return Column(
       children: [
         Container(
-            child: new FlatButton(
+            child: new TextButton(
               onPressed: () {
                 buildContextList.removeLast();
                 Navigator.pop(context);
               },
               child: new Text('< Back'),
-              color: Colors.white,
+              style: TextButton.styleFrom(
+                  backgroundColor: Colors.blue, primary: Colors.white),
             ),
             decoration: new BoxDecoration(
                 color: Colors.white,
@@ -234,7 +291,7 @@ class UsersState extends State<Users> {
                         searchText = value;
                       })),
             ),
-            RaisedButton(
+            ElevatedButton(
               onPressed: () {
                 executeSearch();
               },
@@ -261,10 +318,12 @@ class UsersState extends State<Users> {
                               alignment: Alignment.centerLeft,
                             )
                           ])),
-                          FlatButton(
+                          TextButton(
                             onPressed: () => showActionSheet(index),
                             child: Text('Actions'),
-                            color: Colors.blue,
+                            style: TextButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                primary: Colors.white),
                           ),
                         ],
                       ),

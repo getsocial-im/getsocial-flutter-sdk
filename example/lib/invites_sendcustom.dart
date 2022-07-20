@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:getsocial_example/common.dart';
-import 'package:getsocial_flutter_sdk/common/media_attachment.dart';
 import 'package:getsocial_flutter_sdk/getsocial_flutter_sdk.dart';
 import 'package:file_picker/file_picker.dart';
 
@@ -16,20 +15,20 @@ class SendCustomInvite extends StatefulWidget {
 
 class SendCustomInviteState extends State<SendCustomInvite> {
   final _formKey = GlobalKey<FormState>();
-  String _subject;
-  String _text;
-  String _imageUrl;
-  String _lpTitle;
-  String _lpDescription;
-  String _lpImageUrl;
-  String _lpVideoUrl;
-  String _customKey1;
-  String _customValue1;
-  String _customKey2;
-  String _customValue2;
+  String? _subject;
+  String? _text;
+  String? _imageUrl;
+  String? _lpTitle;
+  String? _lpDescription;
+  String? _lpImageUrl;
+  String? _lpVideoUrl;
+  String? _customKey1;
+  String? _customValue1;
+  String? _customKey2;
+  String? _customValue2;
 
-  File _image;
-  File _video;
+  File? _image;
+  File? _video;
 
   void removeImage() {
     setState(() {
@@ -44,17 +43,21 @@ class SendCustomInviteState extends State<SendCustomInvite> {
   }
 
   Future getImage() async {
-    final pickedFile = await FilePicker.getFile(type: FileType.image);
-    setState(() {
-      _image = File(pickedFile.path);
-    });
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result != null) {
+      setState(() {
+        _image = File(result.files.single.path!);
+      });
+    }
   }
 
   Future getVideo() async {
-    final pickedFile = await FilePicker.getFile(type: FileType.video);
-    setState(() {
-      _video = File(pickedFile.path);
-    });
+    final result = await FilePicker.platform.pickFiles(type: FileType.video);
+    if (result != null) {
+      setState(() {
+        _video = File(result.files.single.path!);
+      });
+    }
   }
 
   @override
@@ -67,15 +70,16 @@ class SendCustomInviteState extends State<SendCustomInvite> {
   }
 
   List<Widget> getFormWidget() {
-    List<Widget> formWidget = new List();
+    List<Widget> formWidget = List.empty(growable: true);
     formWidget.add(new Container(
-        child: new FlatButton(
+        child: new TextButton(
           onPressed: () {
             buildContextList.removeLast();
             Navigator.pop(context);
           },
           child: new Text('< Back'),
-          color: Colors.white,
+          style: TextButton.styleFrom(
+              backgroundColor: Colors.blue, primary: Colors.white),
         ),
         decoration: new BoxDecoration(
             color: Colors.white,
@@ -180,10 +184,10 @@ class SendCustomInviteState extends State<SendCustomInvite> {
       initialValue: _customValue2,
     ));
 
-    formWidget.add(new RaisedButton(
+    formWidget.add(new ElevatedButton(
         onPressed: showInviteChannels,
-        color: Colors.blue,
-        textColor: Colors.white,
+        style: ElevatedButton.styleFrom(
+            primary: Colors.blue, onPrimary: Colors.white),
         child: new Text('Send')));
 
     return formWidget;
@@ -193,27 +197,30 @@ class SendCustomInviteState extends State<SendCustomInvite> {
     if (_image == null && _video == null) {
       return Row(
         children: [
-          FlatButton(
+          TextButton(
               child: Text('Add Image'),
               onPressed: () => getImage(),
-              color: Colors.orange),
+              style: TextButton.styleFrom(
+                  backgroundColor: Colors.orange, primary: Colors.white)),
           Padding(padding: EdgeInsets.only(left: 20.0)),
-          FlatButton(
+          TextButton(
               child: Text('Add Video'),
               onPressed: () => getVideo(),
-              color: Colors.orange),
+              style: TextButton.styleFrom(
+                  backgroundColor: Colors.orange, primary: Colors.white)),
         ],
       );
     } else if (_image != null) {
       return Column(children: [
         Container(
-            child: Image.file(_image, fit: BoxFit.fill),
+            child: Image.file(_image!, fit: BoxFit.fill),
             width: 300,
             height: 150),
-        FlatButton(
+        TextButton(
           child: Text('Remove'),
           onPressed: () => removeImage(),
-          color: Colors.orange,
+          style: TextButton.styleFrom(
+              backgroundColor: Colors.orange, primary: Colors.white),
         ),
       ]);
     } else if (_video != null) {
@@ -224,10 +231,12 @@ class SendCustomInviteState extends State<SendCustomInvite> {
                   Image.asset('images/video-thumbnail.jpg', fit: BoxFit.fill),
               width: 300,
               height: 150),
-          FlatButton(
-              child: Text('Remove'),
-              onPressed: () => removeVideo(),
-              color: Colors.orange),
+          TextButton(
+            child: Text('Remove'),
+            onPressed: () => removeVideo(),
+            style: TextButton.styleFrom(
+                backgroundColor: Colors.orange, primary: Colors.white),
+          ),
         ],
       );
     }
@@ -244,41 +253,41 @@ class SendCustomInviteState extends State<SendCustomInvite> {
 
   sendInvite(String channelId) async {
     InviteContent content = new InviteContent();
-    if (_subject != null && _subject.length > 0) {
+    if (_subject != null && _subject!.length > 0) {
       content.subject = _subject;
     }
-    if (_text != null && _text.length > 0) {
+    if (_text != null && _text!.length > 0) {
       content.text = _text;
     }
-    if (_imageUrl != null && _imageUrl.length > 0) {
-      content.mediaAttachment = MediaAttachment.withImageUrl(_imageUrl);
+    if (_imageUrl != null && _imageUrl!.length > 0) {
+      content.mediaAttachment = MediaAttachment.withImageUrl(_imageUrl!);
     } else if (_image != null) {
-      final bytes = await File(_image.path).readAsBytes();
+      final bytes = await File(_image!.path).readAsBytes();
       content.mediaAttachment =
           MediaAttachment.withBase64Image(base64Encode(bytes));
     } else if (_video != null) {
-      final bytes = await File(_video.path).readAsBytes();
+      final bytes = await File(_video!.path).readAsBytes();
       content.mediaAttachment =
           MediaAttachment.withBase64Video(base64Encode(bytes));
     }
     content.linkParams = new Map();
-    if (_lpTitle != null && _lpTitle.length > 0) {
-      content.linkParams[LinkParamsKeys.customTitle] = _lpTitle;
+    if (_lpTitle != null && _lpTitle!.length > 0) {
+      content.linkParams[LinkParamsKeys.customTitle] = _lpTitle!;
     }
-    if (_lpDescription != null && _lpDescription.length > 0) {
-      content.linkParams[LinkParamsKeys.customDescription] = _lpDescription;
+    if (_lpDescription != null && _lpDescription!.length > 0) {
+      content.linkParams[LinkParamsKeys.customDescription] = _lpDescription!;
     }
-    if (_lpImageUrl != null && _lpImageUrl.length > 0) {
-      content.linkParams[LinkParamsKeys.customImage] = _lpImageUrl;
+    if (_lpImageUrl != null && _lpImageUrl!.length > 0) {
+      content.linkParams[LinkParamsKeys.customImage] = _lpImageUrl!;
     }
-    if (_lpVideoUrl != null && _lpVideoUrl.length > 0) {
-      content.linkParams[LinkParamsKeys.customYouTubeVideo] = _lpVideoUrl;
+    if (_lpVideoUrl != null && _lpVideoUrl!.length > 0) {
+      content.linkParams[LinkParamsKeys.customYouTubeVideo] = _lpVideoUrl!;
     }
     if (_customKey1 != null && _customValue1 != null) {
-      content.linkParams[_customKey1] = _customValue1;
+      content.linkParams[_customKey1!] = _customValue1!;
     }
     if (_customKey2 != null && _customValue2 != null) {
-      content.linkParams[_customKey2] = _customValue2;
+      content.linkParams[_customKey2!] = _customValue2!;
     }
 
     Invites.send(

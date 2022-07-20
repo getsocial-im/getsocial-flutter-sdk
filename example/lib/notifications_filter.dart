@@ -52,7 +52,7 @@ class NotificationsFilterState extends State<NotificationsFilter> {
   bool filterActionTargeting = false;
   bool filterActionDirect = false;
 
-  Function(Map<String, bool>) onFiltersUpdated;
+  late Function(Map<String, bool>) onFiltersUpdated;
 
   @override
   Widget build(BuildContext context) {
@@ -64,15 +64,16 @@ class NotificationsFilterState extends State<NotificationsFilter> {
   }
 
   List<Widget> getFormWidget() {
-    List<Widget> formWidget = new List();
+    List<Widget> formWidget = List.empty(growable: true);
     formWidget.add(new Container(
-        child: new FlatButton(
+        child: new TextButton(
           onPressed: () {
             buildContextList.removeLast();
             Navigator.pop(context);
           },
           child: new Text('< Back'),
-          color: Colors.white,
+          style: TextButton.styleFrom(
+              backgroundColor: Colors.blue, primary: Colors.white),
         ),
         decoration: new BoxDecoration(
             color: Colors.white,
@@ -82,29 +83,29 @@ class NotificationsFilterState extends State<NotificationsFilter> {
         key: _filterConsumedKey,
         title: Text('Consumed'),
         value: filterConsumed,
-        onChanged: (bool newValue) => setState(() {
-              filterConsumed = newValue;
+        onChanged: (bool? newValue) => setState(() {
+              filterConsumed = newValue!;
             })));
     formWidget.add(new CheckboxListTile(
         key: _filterIgnoredKey,
         title: Text('Ignored'),
         value: filterIgnored,
-        onChanged: (bool newValue) => setState(() {
-              filterIgnored = newValue;
+        onChanged: (bool? newValue) => setState(() {
+              filterIgnored = newValue!;
             })));
     formWidget.add(new CheckboxListTile(
         key: _filterReadKey,
         title: Text('Read'),
         value: filterRead,
-        onChanged: (bool newValue) => setState(() {
-              filterRead = newValue;
+        onChanged: (bool? newValue) => setState(() {
+              filterRead = newValue!;
             })));
     formWidget.add(new CheckboxListTile(
         key: _filterUnreadKey,
         title: Text('Unread'),
         value: filterUnread,
-        onChanged: (bool newValue) => setState(() {
-              filterUnread = newValue;
+        onChanged: (bool? newValue) => setState(() {
+              filterUnread = newValue!;
             })));
     formWidget.add(
         Text('Action Types', style: TextStyle(fontWeight: FontWeight.bold)));
@@ -112,94 +113,94 @@ class NotificationsFilterState extends State<NotificationsFilter> {
         key: _filterActionAllTypesKey,
         title: Text('All Types'),
         value: filterActionAllTypes,
-        onChanged: (bool newValue) => setState(() {
+        onChanged: (bool? newValue) => setState(() {
               filterActionAllTypes = false;
-              filterActionAllTypes = newValue;
+              filterActionAllTypes = newValue!;
             })));
     formWidget.add(new CheckboxListTile(
         key: _filterActionActivityLikeKey,
         title: Text('Activity Like'),
         value: filterActionActivityLike,
-        onChanged: (bool newValue) => setState(() {
+        onChanged: (bool? newValue) => setState(() {
               filterActionAllTypes = false;
-              filterActionActivityLike = newValue;
+              filterActionActivityLike = newValue!;
             })));
     formWidget.add(new CheckboxListTile(
         key: _filterActionCommentLikeKey,
         title: Text('Comment Like'),
         value: filterActionCommentLike,
-        onChanged: (bool newValue) => setState(() {
+        onChanged: (bool? newValue) => setState(() {
               filterActionAllTypes = false;
-              filterActionCommentLike = newValue;
+              filterActionCommentLike = newValue!;
             })));
     formWidget.add(new CheckboxListTile(
         key: _filterActionRelatedCommentKey,
         title: Text('Related Comment'),
         value: filterActionRelatedComment,
-        onChanged: (bool newValue) => setState(() {
+        onChanged: (bool? newValue) => setState(() {
               filterActionAllTypes = false;
-              filterActionRelatedComment = newValue;
+              filterActionRelatedComment = newValue!;
             })));
     formWidget.add(new CheckboxListTile(
         key: _filterActionMentionInActivityKey,
         title: Text('Mention in Activity'),
         value: filterActionMentionInActivity,
-        onChanged: (bool newValue) => setState(() {
+        onChanged: (bool? newValue) => setState(() {
               filterActionAllTypes = false;
-              filterActionMentionInActivity = newValue;
+              filterActionMentionInActivity = newValue!;
             })));
     formWidget.add(new CheckboxListTile(
         key: _filterActionMentionInCommentKey,
         title: Text('Mention in Comment'),
         value: filterActionMentionInComment,
-        onChanged: (bool newValue) => setState(() {
+        onChanged: (bool? newValue) => setState(() {
               filterActionAllTypes = false;
-              filterActionMentionInComment = newValue;
+              filterActionMentionInComment = newValue!;
             })));
     formWidget.add(new CheckboxListTile(
         key: _filterActionInviteAcceptedKey,
         title: Text('Invite Accepted'),
         value: filterActionInviteAccepted,
-        onChanged: (bool newValue) => setState(() {
+        onChanged: (bool? newValue) => setState(() {
               filterActionAllTypes = false;
-              filterActionInviteAccepted = newValue;
+              filterActionInviteAccepted = newValue!;
             })));
     formWidget.add(new CheckboxListTile(
         key: _filterActionNewFriendshipKey,
         title: Text('New Friendship'),
         value: filterActionNewFriendship,
-        onChanged: (bool newValue) => setState(() {
+        onChanged: (bool? newValue) => setState(() {
               filterActionAllTypes = false;
-              filterActionNewFriendship = newValue;
+              filterActionNewFriendship = newValue!;
             })));
     formWidget.add(new CheckboxListTile(
         key: _filterActionReplyToCommentKey,
         title: Text('Reply to Comment'),
         value: filterActionReplyToComment,
-        onChanged: (bool newValue) => setState(() {
+        onChanged: (bool? newValue) => setState(() {
               filterActionAllTypes = false;
-              filterActionReplyToComment = newValue;
+              filterActionReplyToComment = newValue!;
             })));
     formWidget.add(new CheckboxListTile(
         key: _filterActionTargetingKey,
         title: Text('Targeting'),
         value: filterActionTargeting,
-        onChanged: (bool newValue) => setState(() {
+        onChanged: (bool? newValue) => setState(() {
               filterActionAllTypes = false;
-              filterActionTargeting = newValue;
+              filterActionTargeting = newValue!;
             })));
     formWidget.add(new CheckboxListTile(
         key: _filterActionDirectKey,
         title: Text('Direct'),
         value: filterActionDirect,
-        onChanged: (bool newValue) => setState(() {
+        onChanged: (bool? newValue) => setState(() {
               filterActionAllTypes = false;
-              filterActionDirect = newValue;
+              filterActionDirect = newValue!;
             })));
-    formWidget.add(new RaisedButton(
+    formWidget.add(new ElevatedButton(
         onPressed: saveFilters,
-        color: Colors.blue,
-        textColor: Colors.white,
+        style: ElevatedButton.styleFrom(
+            primary: Colors.blue, onPrimary: Colors.white),
         child: new Text('Save')));
     return formWidget;
   }

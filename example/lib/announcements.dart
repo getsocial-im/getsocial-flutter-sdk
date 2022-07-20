@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:getsocial_example/main.dart';
 import 'package:getsocial_example/postactivity.dart';
 import 'package:getsocial_flutter_sdk/getsocial_flutter_sdk.dart';
-import 'package:platform_action_sheet/platform_action_sheet.dart';
+import 'activities.dart';
+import 'platform_action_sheet.dart';
 import 'common.dart';
 
-class Feed extends StatefulWidget {
+class Announcements extends StatefulWidget {
   @override
-  FeedState createState() => new FeedState();
+  AnnouncementsState createState() => new AnnouncementsState();
 }
 
-class FeedState extends State<Feed> {
-  static ActivitiesQuery query;
-  static bool isComment = false;
+class AnnouncementsState extends State<Announcements> {
+  static AnnouncementsQuery? query;
+  List<GetSocialActivity> activities = [];
+  CurrentUser? currentUser;
   static bool canInteract = true;
-  List<Activity> activities = [];
-  CurrentUser currentUser;
 
   @override
   void initState() {
@@ -35,7 +35,9 @@ class FeedState extends State<Feed> {
           DateTime.fromMillisecondsSinceEpoch(value.createdAt * 1000);
       var activityStr = value.toString();
       showAlert(context, 'Details', '$activityStr, createdAt: $createdAt');
-    }).catchError((error) => showAlert(context, 'Error', error.toString()));
+    }).catchError((error) {
+      showAlert(context, 'Error', error.toString());
+    });
   }
 
   showMyReactions(int index) async {
@@ -55,16 +57,14 @@ class FeedState extends State<Feed> {
 
   likeActivity(int index) async {
     Communities.addReaction('like', activities[index].id)
-        .then((value) => showAlert(
-            context, 'Success', isComment ? 'Comment liked' : 'Activity liked'))
+        .then((value) => showAlert(context, 'Success', 'Announcement liked'))
         .then((value) => executeSearch())
         .catchError((error) => showAlert(context, 'Error', error.toString()));
   }
 
   dislikeActivity(int index) async {
     Communities.removeReaction('like', activities[index].id)
-        .then((value) => showAlert(context, 'Success',
-            isComment ? 'Comment disliked' : 'Activity disliked'))
+        .then((value) => showAlert(context, 'Success', 'Announcement disliked'))
         .then((value) => executeSearch())
         .catchError((error) => showAlert(context, 'Error', error.toString()));
   }
@@ -75,19 +75,20 @@ class FeedState extends State<Feed> {
       this.setState(() {
         activities.removeAt(index);
       });
-      showAlert(context, 'Success',
-          isComment ? 'Comment removed' : 'Activity removed');
-    }).catchError((error) => showAlert(context, 'Error', error.toString()));
+      showAlert(context, 'Success', 'Announcement removed');
+    }).catchError((error) {
+      showAlert(context, 'Error', error.toString());
+    });
   }
 
   reportActivity(int index) async {
     Communities.reportActivity(
             activities[index].id, ReportingReason.spam, 'Looks like spam')
-        .then((value) => {
-              showAlert(context, 'Success',
-                  isComment ? 'Comment reported' : 'Activity reported')
-            })
-        .catchError((error) => showAlert(context, 'Error', error.toString()));
+        .then(
+            (value) => {showAlert(context, 'Success', 'Announcement reported')})
+        .catchError((error) {
+      showAlert(context, 'Error', error.toString());
+    });
   }
 
   List<ActionSheetAction> generatePossibleActions(int index) {
@@ -117,7 +118,6 @@ class FeedState extends State<Feed> {
       hasArrow: true,
     ));
     if (canInteract) {
-      print(activities[index].myReactions);
       actions.add(ActionSheetAction(
         text: (activities[index].myReactions.contains('like')
             ? 'Dislike'
@@ -130,7 +130,7 @@ class FeedState extends State<Feed> {
         },
       ));
     }
-    if (currentUser.userId != activities[index].author.userId &&
+    if (currentUser?.userId != activities[index].author.userId &&
         activities[index].author.userId != "app") {
       actions.add(ActionSheetAction(
           text: 'Report',
@@ -139,7 +139,7 @@ class FeedState extends State<Feed> {
             reportActivity(index);
           }));
     }
-    if (currentUser.userId == activities[index].author.userId) {
+    if (currentUser?.userId == activities[index].author.userId) {
       actions.add(ActionSheetAction(
           text: 'Remove',
           onPressed: () {
@@ -147,14 +147,18 @@ class FeedState extends State<Feed> {
             removeActivity(index);
           }));
     }
-    if (currentUser.userId == activities[index].author.userId) {
+    if (currentUser?.userId == activities[index].author.userId) {
       actions.add(ActionSheetAction(
           text: 'Edit',
           onPressed: () {
             Navigator.pop(context);
             PostActivityState.oldActivity = activities[index];
-            PostActivityState.isComment = FeedState.isComment;
-            Navigator.pushNamed(context, "/postactivity");
+            PostActivityState.isComment = false;
+            Navigator.pushNamed(context, "/postactivity").then((result) {
+              if (result != null) {
+                executeSearch();
+              }
+            });
           }));
     }
 
@@ -173,10 +177,10 @@ class FeedState extends State<Feed> {
       text: 'View comments',
       onPressed: () {
         Navigator.pop(context);
-        FeedState.query =
+        ActivitiesState.query =
             ActivitiesQuery.commentsToActivity(activities[index].id);
-        FeedState.isComment = true;
-        Navigator.pushNamed(context, '/feed');
+        ActivitiesState.isComment = true;
+        Navigator.pushNamed(context, '/activities');
       },
     ));
     if (canInteract) {
@@ -204,56 +208,45 @@ class FeedState extends State<Feed> {
 
   showActionSheet(int index) async {
     PlatformActionSheet().displaySheet(
-        context: context, actions: generatePossibleActions(index));
+        context, Text(''), Text(''), generatePossibleActions(index));
   }
 
   showCommentsActionSheet(int index) async {
     PlatformActionSheet().displaySheet(
-        context: context, actions: generatePossibleCommentsActions(index));
+        context, Text(''), Text(''), generatePossibleCommentsActions(index));
   }
 
   executeButtonAction(int index) async {
-    var action = activities[index].button.action;
+    var action = activities[index].button!.action;
     if (!handleAction(action)) {
       showAlert(context, 'Custom Action', action.toString());
     }
   }
 
   executeSearch() async {
-    Communities.getActivities(PagingQuery(query))
-        .then((value) {
-          this.setState(() {
-            activities = value.entries;
-          });
-        })
-        .then((value) => this.loadAnnouncements())
-        .catchError((error) => showAlert(context, 'Error', error.toString()));
-  }
-
-  loadAnnouncements() async {
-    var aQuery = query.asAnnouncementsQuery();
-    if (aQuery == null) {
-      return;
-    }
-    Communities.getAnnouncements(aQuery).then((entries) {
+    Communities.getAnnouncements(query!).then((entries) {
       this.setState(() {
-        entries.forEach((element) => activities.insert(0, element));
+        activities = entries;
       });
-    }).catchError((error) => showAlert(context, 'Error', error));
+    }).catchError((error) {
+      showAlert(context, 'Error', error.toString());
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    buildContextList.add(context);
     return Column(
       children: [
         Container(
-            child: new FlatButton(
+            child: new TextButton(
               onPressed: () {
                 buildContextList.removeLast();
                 Navigator.pop(context);
               },
               child: new Text('< Back'),
-              color: Colors.white,
+              style: TextButton.styleFrom(
+                  backgroundColor: Colors.blue, primary: Colors.white),
             ),
             decoration: new BoxDecoration(
                 color: Colors.white,
@@ -278,7 +271,7 @@ class FeedState extends State<Feed> {
                                   child: Text('Text: ' +
                                       (activity.text == null
                                           ? 'null'
-                                          : activity.text)),
+                                          : activity.text!)),
                                   alignment: Alignment.centerLeft,
                                 ),
                                 Align(
@@ -294,29 +287,25 @@ class FeedState extends State<Feed> {
                                         activity.isAnnouncement.toString()),
                                     alignment: Alignment.centerLeft),
                                 activity.button != null
-                                    ? FlatButton(
-                                        child: Text(activity.button.title),
+                                    ? TextButton(
+                                        child: Text(activity.button!.title),
                                         onPressed: () =>
                                             executeButtonAction(index),
-                                        color: Colors.green,
+                                        style: TextButton.styleFrom(
+                                            backgroundColor: Colors.green,
+                                            primary: Colors.white),
                                       )
                                     : Text("")
                               ],
                             ),
                           ),
-                          !isComment
-                              ? FlatButton(
-                                  onPressed: () =>
-                                      showCommentsActionSheet(index),
-                                  child: Text('Comments'),
-                                  color: Colors.blue,
-                                )
-                              : Text(" "),
                           Text(" "),
-                          FlatButton(
+                          TextButton(
                             onPressed: () => showActionSheet(index),
                             child: Text('Actions'),
-                            color: Colors.blue,
+                            style: TextButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                primary: Colors.white),
                           ),
                         ],
                       ),

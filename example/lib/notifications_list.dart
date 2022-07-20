@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:getsocial_example/notifications_filter.dart';
 import 'package:getsocial_flutter_sdk/getsocial_flutter_sdk.dart';
 import 'common.dart';
-import 'package:platform_action_sheet/platform_action_sheet.dart';
+import 'platform_action_sheet.dart';
 
 import 'main.dart';
 
 // ignore: must_be_immutable
 class NotificationsList extends StatefulWidget {
-  NotificationsFilter notificationsFilter;
+  late NotificationsFilter notificationsFilter;
 
   NotificationsList(NotificationsFilter notificationsFilter) {
     this.notificationsFilter = notificationsFilter;
@@ -21,10 +21,9 @@ class NotificationsList extends StatefulWidget {
 
 class NotificationsListState extends State<NotificationsList> {
   List<GetSocialNotification> notifications = [];
-  NotificationsFilter notificationsFilter;
+  late NotificationsFilter notificationsFilter;
 
   NotificationsListState(NotificationsFilter notificationsFilter) {
-    print('constructor invoked');
     this.notificationsFilter = notificationsFilter;
   }
 
@@ -49,7 +48,9 @@ class NotificationsListState extends State<NotificationsList> {
       setState(() {
         notifications[index].status = newStatus;
       });
-    }).catchError((error) => showAlert(context, 'Error', error.toString()));
+    }).catchError((error) {
+      showAlert(context, 'Error', error.toString());
+    });
   }
 
   List<ActionSheetAction> generatePossibleActions(int index) {
@@ -83,7 +84,7 @@ class NotificationsListState extends State<NotificationsList> {
 
   showActionSheet(int index) async {
     PlatformActionSheet().displaySheet(
-        context: context, actions: generatePossibleActions(index));
+        context, Text(''), Text(''), generatePossibleActions(index));
   }
 
   executeSearch(Map<String, bool> updatedFilters) async {
@@ -100,7 +101,8 @@ class NotificationsListState extends State<NotificationsList> {
     if (updatedFilters[NotificationStatus.unread] ?? false) {
       query.statuses.add(NotificationStatus.unread);
     }
-    if (updatedFilters.containsKey('AllTypes') && !updatedFilters['AllTypes']) {
+    if (updatedFilters.containsKey('AllTypes') &&
+        !updatedFilters['AllTypes']!) {
       if (updatedFilters[NotificationType.likeActivity] ?? false) {
         query.types.add(NotificationType.likeActivity);
       }
@@ -143,12 +145,13 @@ class NotificationsListState extends State<NotificationsList> {
   Widget createActionButtons(
       BuildContext context, List<NotificationButton> buttons) {
     if (buttons.length != 0) {
-      List<FlatButton> widgetButtons = [];
+      List<TextButton> widgetButtons = [];
       buttons.forEach((element) {
-        widgetButtons.add(FlatButton(
+        widgetButtons.add(TextButton(
           onPressed: () => print('button pressed'),
           child: Text(element.title),
-          color: Colors.orange,
+          style: TextButton.styleFrom(
+              backgroundColor: Colors.orange, primary: Colors.white),
         ));
       });
       return Row(children: widgetButtons);
@@ -156,19 +159,19 @@ class NotificationsListState extends State<NotificationsList> {
     return Container();
   }
 
-  Widget createAttachment(BuildContext context, MediaAttachment attachment) {
+  Widget createAttachment(BuildContext context, MediaAttachment? attachment) {
     if (attachment != null) {
       if (attachment.imageUrl != null) {
         return Row(children: [
           Container(
-              child: Image.network(attachment.imageUrl, fit: BoxFit.fill),
+              child: Image.network(attachment.imageUrl!, fit: BoxFit.fill),
               width: 300,
               height: 150)
         ]);
       } else if (attachment.videoUrl != null) {
-        return Row(children: [Container(child: Text(attachment.videoUrl))]);
+        return Row(children: [Container(child: Text(attachment.videoUrl!))]);
       } else if (attachment.gifUrl != null) {
-        return Row(children: [Container(child: Text(attachment.gifUrl))]);
+        return Row(children: [Container(child: Text(attachment.gifUrl!))]);
       }
     }
     return Container();
@@ -176,27 +179,30 @@ class NotificationsListState extends State<NotificationsList> {
 
   @override
   Widget build(BuildContext context) {
+    buildContextList.add(context);
     return Column(
       children: [
         Container(
-            child: new FlatButton(
+            child: new TextButton(
               onPressed: () {
                 buildContextList.removeLast();
                 Navigator.pop(context);
               },
               child: new Text('< Back'),
-              color: Colors.white,
+              style: TextButton.styleFrom(
+                  backgroundColor: Colors.blue, primary: Colors.white),
             ),
             decoration: new BoxDecoration(
                 color: Colors.white,
                 border: new Border(bottom: new BorderSide()))),
         Container(
-            child: new FlatButton(
+            child: new TextButton(
               onPressed: () {
                 Navigator.pushNamed(context, '/notifications_filter');
               },
               child: new Text('Filter Settings'),
-              color: Colors.white,
+              style: TextButton.styleFrom(
+                  backgroundColor: Colors.blue, primary: Colors.white),
             ),
             decoration: new BoxDecoration(
                 color: Colors.white,
@@ -207,14 +213,16 @@ class NotificationsListState extends State<NotificationsList> {
                 itemCount: notifications.length,
                 itemBuilder: (BuildContext context, int index) {
                   var notification = notifications[index];
-                  var customization = notification.customization;
-                  var backgroundImage = customization == null
+                  var backgroundImage = notification.customization == null
                       ? 'null'
-                      : customization.backgroundImageConfiguration;
-                  var textColor =
-                      customization == null ? 'null' : customization.textColor;
-                  var titleColor =
-                      customization == null ? 'null' : customization.titleColor;
+                      : notification
+                          .customization!.backgroundImageConfiguration;
+                  var textColor = notification.customization == null
+                      ? 'null'
+                      : notification.customization!.textColor;
+                  var titleColor = notification.customization == null
+                      ? 'null'
+                      : notification.customization!.titleColor;
                   return Container(
                       child: Column(
                         children: [
@@ -228,26 +236,29 @@ class NotificationsListState extends State<NotificationsList> {
                           Row(
                             children: [
                               Expanded(
-                                child: Text(notification.sender.displayName),
+                                child: Text(
+                                    notification.sender?.displayName ?? ''),
                               )
                             ],
                           ),
                           Row(
                             children: [
                               Expanded(
-                                child: Text(notification.title),
+                                child: Text(notification.title ?? ''),
                               )
                             ],
                           ),
                           Row(
                             children: [
                               Expanded(
-                                child: Text(notification.text),
+                                child: Text(notification.text ?? ''),
                               ),
-                              FlatButton(
+                              TextButton(
                                 onPressed: () => showActionSheet(index),
                                 child: Text('Actions'),
-                                color: Colors.blue,
+                                style: TextButton.styleFrom(
+                                    backgroundColor: Colors.blue,
+                                    primary: Colors.white),
                               ),
                             ],
                           ),

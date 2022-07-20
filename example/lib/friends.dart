@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:getsocial_flutter_sdk/getsocial_flutter_sdk.dart';
 import 'common.dart';
-import 'package:platform_action_sheet/platform_action_sheet.dart';
+import 'platform_action_sheet.dart';
 
 import 'main.dart';
 
@@ -11,12 +11,12 @@ class Friends extends StatefulWidget {
 }
 
 class FriendsState extends State<Friends> {
-  static FriendsQuery query;
+  static FriendsQuery? query;
   static bool isCurrentUser = false;
   List<User> users = [];
   List<String> followedUsers = [];
   List<String> friends = [];
-  CurrentUser currentUser;
+  CurrentUser? currentUser;
 
   @override
   void initState() {
@@ -94,7 +94,9 @@ class FriendsState extends State<Friends> {
           });
         }
       });
-    }).catchError((error) => showError(context, error.toString()));
+    }).catchError((error) {
+      showError(context, error.toString());
+    });
   }
 
   loadFollowStatus(List<String> userIds) async {
@@ -118,7 +120,9 @@ class FriendsState extends State<Friends> {
           });
         }
       });
-    }).catchError((error) => showError(context, error.toString()));
+    }).catchError((error) {
+      showError(context, error.toString());
+    });
   }
 
   List<ActionSheetAction> generateActions(int index) {
@@ -128,7 +132,7 @@ class FriendsState extends State<Friends> {
       onPressed: () => {Navigator.pop(context), showDetail(index)},
       hasArrow: true,
     ));
-    if (currentUser.userId != users[index].userId) {
+    if (currentUser?.userId != users[index].userId) {
       actions.add(ActionSheetAction(
         text: (friends.contains(users[index].userId)
             ? 'Remove Friend'
@@ -163,11 +167,11 @@ class FriendsState extends State<Friends> {
 
   showActionSheet(int index) async {
     PlatformActionSheet()
-        .displaySheet(context: context, actions: generateActions(index));
+        .displaySheet(context, Text(''), Text(''), generateActions(index));
   }
 
   executeSearch() async {
-    Communities.getFriends(PagingQuery(query))
+    Communities.getFriends(PagingQuery(query!))
         .then((value) {
           if (value.entries.isEmpty) {
             showAlert(context, 'Info', 'No friends found');
@@ -183,16 +187,18 @@ class FriendsState extends State<Friends> {
 
   @override
   Widget build(BuildContext context) {
+    buildContextList.add(context);
     return Column(
       children: [
         Container(
-            child: new FlatButton(
+            child: new TextButton(
               onPressed: () {
                 buildContextList.removeLast();
                 Navigator.pop(context);
               },
               child: new Text('< Back'),
-              color: Colors.white,
+              style: TextButton.styleFrom(
+                  backgroundColor: Colors.blue, primary: Colors.white),
             ),
             decoration: new BoxDecoration(
                 color: Colors.white,
@@ -216,10 +222,12 @@ class FriendsState extends State<Friends> {
                               alignment: Alignment.centerLeft,
                             )
                           ])),
-                          FlatButton(
+                          TextButton(
                             onPressed: () => showActionSheet(index),
                             child: Text('Actions'),
-                            color: Colors.blue,
+                            style: TextButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                primary: Colors.white),
                           ),
                         ],
                       ),

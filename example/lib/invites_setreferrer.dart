@@ -29,15 +29,16 @@ class SetReferrerState extends State<SetReferrer> {
   }
 
   List<Widget> getFormWidget() {
-    List<Widget> formWidget = new List();
+    List<Widget> formWidget = List.empty(growable: true);
     formWidget.add(new Container(
-        child: new FlatButton(
+        child: new TextButton(
           onPressed: () {
             buildContextList.removeLast();
             Navigator.pop(context);
           },
           child: new Text('< Back'),
-          color: Colors.white,
+          style: TextButton.styleFrom(
+              backgroundColor: Colors.blue, primary: Colors.white),
         ),
         decoration: new BoxDecoration(
             color: Colors.white,
@@ -72,29 +73,29 @@ class SetReferrerState extends State<SetReferrer> {
       key: _customDataValue2,
       decoration: InputDecoration(labelText: 'Value2', hintText: 'Value2'),
     ));
-    formWidget.add(new RaisedButton(
+    formWidget.add(new ElevatedButton(
         onPressed: setReferrer,
-        color: Colors.blue,
-        textColor: Colors.white,
+        style: ElevatedButton.styleFrom(
+            primary: Colors.blue, onPrimary: Colors.white),
         child: new Text('Set Referrer')));
     return formWidget;
   }
 
   setReferrer() async {
     UserId userId = UserId.createWithProvider(
-        _userIdKey.currentState.value, _providerIdKey.currentState.value);
+        _userIdKey.currentState?.value, _providerIdKey.currentState?.value);
     Map<String, String> customData = new Map();
-    if (_customDataKey1.currentState.value != null &&
-        _customDataValue1.currentState.value != null) {
-      customData[_customDataKey1.currentState.value] =
-          _customDataValue1.currentState.value;
+    if (_customDataKey1.currentState?.value != null &&
+        _customDataValue1.currentState?.value != null) {
+      customData[_customDataKey1.currentState?.value] =
+          _customDataValue1.currentState?.value;
     }
-    if (_customDataKey2.currentState.value != null &&
-        _customDataValue2.currentState.value != null) {
-      customData[_customDataKey2.currentState.value] =
-          _customDataValue2.currentState.value;
+    if (_customDataKey2.currentState?.value != null &&
+        _customDataValue2.currentState?.value != null) {
+      customData[_customDataKey2.currentState?.value] =
+          _customDataValue2.currentState?.value;
     }
-    Invites.setReferrer(userId, _eventKey.currentState.value, customData)
+    Invites.setReferrer(userId, _eventKey.currentState?.value, customData)
         .then((value) => showAlert(context, 'Success', 'Referrer was set'))
         .catchError((error) => showError(context, error.toString()));
   }

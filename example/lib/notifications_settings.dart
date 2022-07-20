@@ -25,15 +25,16 @@ class NotificationsSettingsState extends State<NotificationsSettings> {
   }
 
   List<Widget> getFormWidget() {
-    List<Widget> formWidget = new List();
+    List<Widget> formWidget = List.empty(growable: true);
     formWidget.add(new Container(
-        child: new FlatButton(
+        child: new TextButton(
           onPressed: () {
             buildContextList.removeLast();
             Navigator.pop(context);
           },
           child: new Text('< Back'),
-          color: Colors.white,
+          style: TextButton.styleFrom(
+              backgroundColor: Colors.blue, primary: Colors.white),
         ),
         decoration: new BoxDecoration(
             color: Colors.white,
@@ -43,8 +44,8 @@ class NotificationsSettingsState extends State<NotificationsSettings> {
         key: _settingsKey,
         title: Text('Push Notifications Enabled'),
         value: pnEnabled,
-        onChanged: (bool newValue) => setState(() {
-              updateSettings(newValue);
+        onChanged: (bool? newValue) => setState(() {
+              updateSettings(newValue!);
             })));
     return formWidget;
   }

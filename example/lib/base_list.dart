@@ -20,7 +20,7 @@ abstract class BaseListView extends StatelessWidget {
         itemBuilder: (BuildContext context, int index) {
           var button = buttons[index];
           return Container(
-              child: FlatButton(
+              child: TextButton(
                 onPressed: () {
                   button.action(context);
                 },

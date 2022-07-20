@@ -9,6 +9,7 @@ class UserDetailsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    buildContextList.add(context);
     return Column(
       children: [
         SizedBox(height: 10),
@@ -27,13 +28,14 @@ class UserDetailsView extends StatelessWidget {
           children: [
             new Expanded(
               child: new Container(
-                  child: new FlatButton(
+                  child: new TextButton(
                     onPressed: () {
                       buildContextList.removeLast();
                       Navigator.pop(context);
                     },
                     child: new Text('< Back'),
-                    color: Colors.white,
+                    style: TextButton.styleFrom(
+                        backgroundColor: Colors.blue, primary: Colors.white),
                   ),
                   decoration: new BoxDecoration(
                       color: Colors.white,
@@ -63,7 +65,7 @@ class UserDetailsView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Text('Avatar Url: ', style: TextStyle(fontWeight: FontWeight.bold)),
-            Expanded(child: Text(currentUser.avatarUrl))
+            Expanded(child: Text(currentUser.avatarUrl ?? ''))
           ],
         ),
         SizedBox(height: 10),
@@ -92,24 +94,16 @@ class UserDetailsView extends StatelessWidget {
             Expanded(child: Text(currentUser.privateProperties.toString()))
           ],
         ),
+        SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Text('Is Verified: ',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            Expanded(child: Text(currentUser.verified.toString()))
+          ],
+        ),
       ],
     );
-//    return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-//      Row(children: [Expanded(child: Text('User Details', style: TextStyle(fontWeight: FontWeight.bold)))],),
-//      new Container(
-//          child: new FlatButton(
-//            onPressed: () => Navigator.pop(context),
-//            child: new Text('< Back'),
-//            color: Colors.white,
-//          ),
-//          decoration:
-//          new BoxDecoration(
-//              color: Colors.white,
-//              border: new Border(
-//                  bottom: new BorderSide()
-//              )
-//          )
-//      ),
-//    ],);
   }
 }

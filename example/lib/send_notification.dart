@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:getsocial_flutter_sdk/common/media_attachment.dart';
 import 'package:getsocial_flutter_sdk/getsocial_flutter_sdk.dart';
 import 'package:file_picker/file_picker.dart';
 import 'common.dart';
@@ -14,50 +13,50 @@ class SendNotification extends StatefulWidget {
 }
 
 class SendNotificationState extends State<SendNotification> {
-  static SendNotificationTarget target;
+  static SendNotificationTarget? target;
 
   TextEditingController actionDataKeyController = TextEditingController();
   TextEditingController actionDataValueController = TextEditingController();
   TextEditingController customActionController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
-  String _templateName;
-  String _text;
-  String _title;
-  String _textColor;
-  String _titleColor;
-  String _imageUrl;
-  String _videoUrl;
-  String _backgroundImageUrl;
-  String _templateDataKey1;
-  String _templateDataValue1;
-  String _templateDataKey2;
-  String _templateDataValue2;
+  String? _templateName;
+  String? _text;
+  String? _title;
+  String? _textColor;
+  String? _titleColor;
+  String? _imageUrl;
+  String? _videoUrl;
+  String? _backgroundImageUrl;
+  String? _templateDataKey1;
+  String? _templateDataValue1;
+  String? _templateDataKey2;
+  String? _templateDataValue2;
 
   String _action = 'no_action';
-  String _actionButtonTitle1;
-  String _actionButtonActionId1;
+  String? _actionButtonTitle1;
+  String? _actionButtonActionId1;
 
-  String _actionButtonTitle2;
-  String _actionButtonActionId2;
+  String? _actionButtonTitle2;
+  String? _actionButtonActionId2;
 
-  File _image;
-  File _video;
+  File? _image;
+  File? _video;
 
-  String _actionDataKey1;
-  String _actionDataValue1;
-  String _actionDataKey2;
-  String _actionDataValue2;
+  String? _actionDataKey1;
+  String? _actionDataValue1;
+  String? _actionDataKey2;
+  String? _actionDataValue2;
 
-  String _badgeCount;
-  String _badgeIncrease;
+  String? _badgeCount;
+  String? _badgeIncrease;
 
   bool _sendToFriends = false;
   bool _sendToReferrer = false;
   bool _sendToReferredUsers = false;
 
-  String _userId1;
-  String _userId2;
+  String? _userId1;
+  String? _userId2;
 
   @override
   void initState() {
@@ -77,17 +76,21 @@ class SendNotificationState extends State<SendNotification> {
   }
 
   Future getImage() async {
-    final pickedFile = await FilePicker.getFile(type: FileType.image);
-    setState(() {
-      _image = File(pickedFile.path);
-    });
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result != null) {
+      setState(() {
+        _image = File(result.files.single.path!);
+      });
+    }
   }
 
   Future getVideo() async {
-    final pickedFile = await FilePicker.getFile(type: FileType.video);
-    setState(() {
-      _video = File(pickedFile.path);
-    });
+    final result = await FilePicker.platform.pickFiles(type: FileType.video);
+    if (result != null) {
+      setState(() {
+        _video = File(result.files.single.path!);
+      });
+    }
   }
 
   @override
@@ -100,15 +103,16 @@ class SendNotificationState extends State<SendNotification> {
   }
 
   List<Widget> getFormWidget() {
-    List<Widget> formWidget = new List();
+    List<Widget> formWidget = List.empty(growable: true);
     formWidget.add(new Container(
-        child: new FlatButton(
+        child: new TextButton(
           onPressed: () {
             buildContextList.removeLast();
             Navigator.pop(context);
           },
           child: new Text('< Back'),
-          color: Colors.white,
+          style: TextButton.styleFrom(
+              backgroundColor: Colors.blue, primary: Colors.white),
         ),
         decoration: new BoxDecoration(
             color: Colors.white,
@@ -240,7 +244,7 @@ class SendNotificationState extends State<SendNotification> {
         ],
         onChanged: (value) {
           setState(() {
-            _action = value;
+            _action = value as String;
             if (value == 'open_url') {
               actionDataKeyController.text = '\$url';
             } else if (value == 'open_profile') {
@@ -429,10 +433,10 @@ class SendNotificationState extends State<SendNotification> {
       initialValue: _userId2,
     ));
 
-    formWidget.add(new RaisedButton(
+    formWidget.add(new ElevatedButton(
         onPressed: executeSend,
-        color: Colors.blue,
-        textColor: Colors.white,
+        style: ElevatedButton.styleFrom(
+            primary: Colors.blue, onPrimary: Colors.white),
         child: Text('Send')));
 
     return formWidget;
@@ -442,27 +446,32 @@ class SendNotificationState extends State<SendNotification> {
     if (_image == null && _video == null) {
       return Row(
         children: [
-          FlatButton(
-              child: Text('Add Image'),
-              onPressed: () => getImage(),
-              color: Colors.orange),
+          TextButton(
+            child: Text('Add Image'),
+            onPressed: () => getImage(),
+            style: TextButton.styleFrom(
+                backgroundColor: Colors.orange, primary: Colors.white),
+          ),
           Padding(padding: EdgeInsets.only(left: 20.0)),
-          FlatButton(
-              child: Text('Add Video'),
-              onPressed: () => getVideo(),
-              color: Colors.orange),
+          TextButton(
+            child: Text('Add Video'),
+            onPressed: () => getVideo(),
+            style: TextButton.styleFrom(
+                backgroundColor: Colors.orange, primary: Colors.white),
+          ),
         ],
       );
     } else if (_image != null) {
       return Column(children: [
         Container(
-            child: Image.file(_image, fit: BoxFit.fill),
+            child: Image.file(_image!, fit: BoxFit.fill),
             width: 300,
             height: 150),
-        FlatButton(
+        TextButton(
           child: Text('Remove'),
           onPressed: () => removeImage(),
-          color: Colors.orange,
+          style: TextButton.styleFrom(
+              backgroundColor: Colors.orange, primary: Colors.white),
         ),
       ]);
     } else if (_video != null) {
@@ -473,10 +482,11 @@ class SendNotificationState extends State<SendNotification> {
                   Image.asset('images/video-thumbnail.jpg', fit: BoxFit.fill),
               width: 300,
               height: 150),
-          FlatButton(
+          TextButton(
               child: Text('Remove'),
               onPressed: () => removeVideo(),
-              color: Colors.orange),
+              style: TextButton.styleFrom(
+                  backgroundColor: Colors.orange, primary: Colors.white)),
         ],
       );
     }
@@ -485,92 +495,92 @@ class SendNotificationState extends State<SendNotification> {
 
   executeSend() async {
     NotificationContent content = new NotificationContent();
-    if (_templateName != null && _templateName.isNotEmpty) {
+    if (_templateName != null && _templateName!.isNotEmpty) {
       content.templateName = _templateName;
     }
     if (_templateDataKey1 != null &&
-        _templateDataKey1.isNotEmpty &&
+        _templateDataKey1!.isNotEmpty &&
         _templateDataValue1 != null &&
-        _templateDataValue1.isNotEmpty) {
-      content.templatePlaceholders[_templateDataKey1] = _templateDataValue1;
+        _templateDataValue1!.isNotEmpty) {
+      content.templatePlaceholders[_templateDataKey1!] = _templateDataValue1!;
     }
     if (_templateDataKey2 != null &&
-        _templateDataKey2.isNotEmpty &&
+        _templateDataKey2!.isNotEmpty &&
         _templateDataValue2 != null &&
-        _templateDataValue2.isNotEmpty) {
-      content.templatePlaceholders[_templateDataKey2] = _templateDataValue2;
+        _templateDataValue2!.isNotEmpty) {
+      content.templatePlaceholders[_templateDataKey2!] = _templateDataValue2!;
     }
-    if (_text != null && _text.isNotEmpty) {
+    if (_text != null && _text!.isNotEmpty) {
       content.text = _text;
     }
-    if (_title != null && _title.isNotEmpty) {
+    if (_title != null && _title!.isNotEmpty) {
       content.title = _title;
     }
-    if (_imageUrl != null && _imageUrl.isNotEmpty) {
-      content.mediaAttachment = MediaAttachment.withImageUrl(_imageUrl);
+    if (_imageUrl != null && _imageUrl!.isNotEmpty) {
+      content.mediaAttachment = MediaAttachment.withImageUrl(_imageUrl!);
     } else if (_image != null) {
-      final bytes = await File(_image.path).readAsBytes();
+      final bytes = await File(_image!.path).readAsBytes();
       content.mediaAttachment =
           MediaAttachment.withBase64Image(base64Encode(bytes));
     }
-    if (_videoUrl != null && _videoUrl.isNotEmpty) {
-      content.mediaAttachment = MediaAttachment.withVideoUrl(_videoUrl);
+    if (_videoUrl != null && _videoUrl!.isNotEmpty) {
+      content.mediaAttachment = MediaAttachment.withVideoUrl(_videoUrl!);
     } else if (_video != null) {
-      final bytes = await File(_video.path).readAsBytes();
+      final bytes = await File(_video!.path).readAsBytes();
       content.mediaAttachment =
           MediaAttachment.withBase64Video(base64Encode(bytes));
     }
-    if ((_backgroundImageUrl != null && _backgroundImageUrl.isNotEmpty) ||
-        (_titleColor != null && _titleColor.isNotEmpty) ||
-        (_textColor != null && _textColor.isNotEmpty)) {
+    if ((_backgroundImageUrl != null && _backgroundImageUrl!.isNotEmpty) ||
+        (_titleColor != null && _titleColor!.isNotEmpty) ||
+        (_textColor != null && _textColor!.isNotEmpty)) {
       var customization = new NotificationCustomization();
       customization.backgroundImageConfiguration = _backgroundImageUrl;
       customization.titleColor = _titleColor;
       customization.textColor = _textColor;
       content.customization = customization;
     }
-    if ((_badgeCount != null && _badgeCount.isNotEmpty) ||
-        (_badgeIncrease != null && _badgeIncrease.isNotEmpty)) {
+    if ((_badgeCount != null && _badgeCount!.isNotEmpty) ||
+        (_badgeIncrease != null && _badgeIncrease!.isNotEmpty)) {
       var badge = new NotificationBadge();
-      if (_badgeIncrease != null && _badgeIncrease.isNotEmpty) {
-        badge.increase = int.parse(_badgeIncrease);
+      if (_badgeIncrease != null && _badgeIncrease!.isNotEmpty) {
+        badge.increase = int.parse(_badgeIncrease!);
       }
-      if (_badgeCount != null && _badgeCount.isNotEmpty) {
-        badge.badge = int.parse(_badgeCount);
+      if (_badgeCount != null && _badgeCount!.isNotEmpty) {
+        badge.badge = int.parse(_badgeCount!);
       }
       content.badge = badge;
     }
     if (_action != 'no_action' && _action != 'default') {
       Map<String, String> actionData = {};
       if (_actionDataKey1 != null &&
-          _actionDataKey1.isNotEmpty &&
+          _actionDataKey1!.isNotEmpty &&
           _actionDataValue1 != null &&
-          _actionDataValue1.isNotEmpty) {
-        actionData[_actionDataKey1] = _actionDataValue1;
+          _actionDataValue1!.isNotEmpty) {
+        actionData[_actionDataKey1!] = _actionDataValue1!;
       }
       if (_actionDataKey2 != null &&
-          _actionDataKey2.isNotEmpty &&
+          _actionDataKey2!.isNotEmpty &&
           _actionDataValue2 != null &&
-          _actionDataValue2.isNotEmpty) {
-        actionData[_actionDataKey2] = _actionDataValue2;
+          _actionDataValue2!.isNotEmpty) {
+        actionData[_actionDataKey2!] = _actionDataValue2!;
       }
 
       content.action = GetSocialAction(_action, actionData);
     }
     List<NotificationButton> buttons = [];
     if (_actionButtonTitle1 != null &&
-        _actionButtonTitle1.isNotEmpty &&
+        _actionButtonTitle1!.isNotEmpty &&
         _actionButtonActionId1 != null &&
-        _actionButtonActionId1.isNotEmpty) {
-      buttons
-          .add(NotificationButton(_actionButtonTitle1, _actionButtonActionId1));
+        _actionButtonActionId1!.isNotEmpty) {
+      buttons.add(
+          NotificationButton(_actionButtonTitle1!, _actionButtonActionId1!));
     }
     if (_actionButtonTitle2 != null &&
-        _actionButtonTitle2.isNotEmpty &&
+        _actionButtonTitle2!.isNotEmpty &&
         _actionButtonActionId2 != null &&
-        _actionButtonActionId2.isNotEmpty) {
-      buttons
-          .add(NotificationButton(_actionButtonTitle2, _actionButtonActionId2));
+        _actionButtonActionId2!.isNotEmpty) {
+      buttons.add(
+          NotificationButton(_actionButtonTitle2!, _actionButtonActionId2!));
     }
     if (buttons.isNotEmpty) {
       content.actionButtons = buttons;
@@ -590,11 +600,11 @@ class SendNotificationState extends State<SendNotification> {
           .add(NotificationReceiverPlaceholder.referrer);
     }
     List<String> userIds = [];
-    if (_userId1 != null && _userId1.isNotEmpty) {
-      userIds.add(_userId1);
+    if (_userId1 != null && _userId1!.isNotEmpty) {
+      userIds.add(_userId1!);
     }
-    if (_userId2 != null && _userId2.isNotEmpty) {
-      userIds.add(_userId2);
+    if (_userId2 != null && _userId2!.isNotEmpty) {
+      userIds.add(_userId2!);
     }
     if (userIds.isNotEmpty) {
       sendTarget.userIdList = UserIdList.create(userIds);

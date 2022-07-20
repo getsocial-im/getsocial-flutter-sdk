@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
-import 'package:getsocial_flutter_sdk/common/media_attachment.dart';
-import 'package:getsocial_flutter_sdk/getsocial_flutter_sdk.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:getsocial_flutter_sdk/getsocial_flutter_sdk.dart';
+
 import 'common.dart';
 import 'main.dart';
 
@@ -14,8 +14,8 @@ class PostActivity extends StatefulWidget {
 }
 
 class PostActivityState extends State<PostActivity> {
-  static PostActivityTarget target;
-  static Activity oldActivity;
+  static PostActivityTarget? target;
+  static GetSocialActivity? oldActivity;
   static bool isComment = false;
 
   TextEditingController actionDataKeyController = TextEditingController();
@@ -23,56 +23,60 @@ class PostActivityState extends State<PostActivity> {
   TextEditingController customActionController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
-  String _text = oldActivity != null ? oldActivity.text : null;
-  String _imageUrl = oldActivity != null && oldActivity.attachments.isNotEmpty
-      ? oldActivity.attachments.first.imageUrl
+  String? _text = oldActivity?.text;
+  String? _imageUrl = oldActivity != null && oldActivity!.attachments.isNotEmpty
+      ? oldActivity!.attachments.first.imageUrl
       : null;
-  String _customKey1 = oldActivity != null && oldActivity.properties.isNotEmpty
-      ? oldActivity.properties.keys.first
-      : null;
-  String _customValue1 =
-      oldActivity != null && oldActivity.properties.isNotEmpty
-          ? oldActivity.properties.values.first
+  String? _customKey1 =
+      oldActivity != null && oldActivity!.properties.isNotEmpty
+          ? oldActivity!.properties.keys.first
           : null;
-  String _customKey2 = oldActivity != null && oldActivity.properties.length == 2
-      ? oldActivity.properties.keys.toList()[1]
-      : null;
-  String _customValue2 =
-      oldActivity != null && oldActivity.properties.length == 2
-          ? oldActivity.properties.values.toList()[1]
+  String? _customValue1 =
+      oldActivity != null && oldActivity!.properties.isNotEmpty
+          ? oldActivity!.properties.values.first
           : null;
-  String _action = oldActivity != null &&
-          oldActivity.button != null &&
-          oldActivity.button.action != null
+  String? _customKey2 =
+      oldActivity != null && oldActivity!.properties.length == 2
+          ? oldActivity!.properties.keys.toList()[1]
+          : null;
+  String? _customValue2 =
+      oldActivity != null && oldActivity!.properties.length == 2
+          ? oldActivity!.properties.values.toList()[1]
+          : null;
+  String? _labels = oldActivity != null && oldActivity!.labels.isNotEmpty
+      ? oldActivity!.labels.join(',')
+      : null;
+  String? _action = oldActivity != null &&
+          oldActivity?.button != null &&
+          oldActivity?.button!.action != null
       ? (['open_profile', 'open_url', 'open_activity', 'open_invites']
-              .contains(oldActivity.button.action.type)
-          ? oldActivity.button.action.type
+              .contains(oldActivity?.button!.action.type)
+          ? oldActivity?.button!.action.type
           : 'custom')
       : 'default';
-  String _buttonTitle = oldActivity != null && oldActivity.button != null
-      ? oldActivity.button.title
+  String? _buttonTitle = oldActivity != null && oldActivity?.button != null
+      ? oldActivity?.button!.title
       : null;
 
-  File _image;
-  File _video;
+  File? _image;
+  File? _video;
 
   @override
   void initState() {
     actionDataKeyController.text = oldActivity != null &&
-            oldActivity.button != null &&
-            oldActivity.button.action.data.isNotEmpty
-        ? oldActivity.button.action.data.keys.first
-        : null;
+            oldActivity!.button != null &&
+            oldActivity!.button!.action.data.isNotEmpty
+        ? oldActivity!.button!.action.data.keys.first
+        : '';
     actionDataValueController.text = oldActivity != null &&
-            oldActivity.button != null &&
-            oldActivity.button.action.data.isNotEmpty
-        ? oldActivity.button.action.data.values.first
-        : null;
-    customActionController.text = oldActivity != null &&
-            oldActivity.button != null &&
-            oldActivity.button.action != null
-        ? oldActivity.button.action.type
-        : null;
+            oldActivity!.button != null &&
+            oldActivity!.button!.action.data.isNotEmpty
+        ? oldActivity!.button!.action.data.values.first
+        : '';
+    customActionController.text =
+        oldActivity != null && oldActivity!.button != null
+            ? oldActivity!.button!.action.type
+            : '';
     super.initState();
   }
 
@@ -89,17 +93,21 @@ class PostActivityState extends State<PostActivity> {
   }
 
   Future getImage() async {
-    final pickedFile = await FilePicker.getFile(type: FileType.image);
-    setState(() {
-      _image = File(pickedFile.path);
-    });
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result != null) {
+      setState(() {
+        _image = File(result.files.single.path!);
+      });
+    }
   }
 
   Future getVideo() async {
-    final pickedFile = await FilePicker.getFile(type: FileType.video);
-    setState(() {
-      _video = File(pickedFile.path);
-    });
+    final result = await FilePicker.platform.pickFiles(type: FileType.video);
+    if (result != null) {
+      setState(() {
+        _video = File(result.files.single.path!);
+      });
+    }
   }
 
   @override
@@ -112,15 +120,16 @@ class PostActivityState extends State<PostActivity> {
   }
 
   List<Widget> getFormWidget() {
-    List<Widget> formWidget = new List();
+    List<Widget> formWidget = List.empty(growable: true);
     formWidget.add(new Container(
-        child: new FlatButton(
+        child: new TextButton(
           onPressed: () {
             buildContextList.removeLast();
-            Navigator.pop(context);
+            Navigator.pop(context, {'reload': true});
           },
           child: new Text('< Back'),
-          color: Colors.white,
+          style: TextButton.styleFrom(
+              backgroundColor: Colors.blue, primary: Colors.white),
         ),
         decoration: new BoxDecoration(
             color: Colors.white,
@@ -180,6 +189,18 @@ class PostActivityState extends State<PostActivity> {
       initialValue: _customValue2,
     ));
 
+    formWidget
+        .add(Text('Labels', style: TextStyle(fontWeight: FontWeight.bold)));
+
+    formWidget.add(new TextFormField(
+      decoration:
+          InputDecoration(labelText: '', hintText: 'Label1,Label2,Label3'),
+      onChanged: (value) => setState(() {
+        _labels = value;
+      }),
+      initialValue: _labels,
+    ));
+
     formWidget.add(
         Text('Activity button', style: TextStyle(fontWeight: FontWeight.bold)));
     formWidget.add(new TextFormField(
@@ -213,7 +234,7 @@ class PostActivityState extends State<PostActivity> {
         ],
         onChanged: (value) {
           setState(() {
-            _action = value;
+            _action = value as String;
             if (value == 'open_url') {
               actionDataKeyController.text = '\$url';
             } else if (value == 'open_profile') {
@@ -243,10 +264,10 @@ class PostActivityState extends State<PostActivity> {
           InputDecoration(labelText: 'Action data value', hintText: 'Value'),
       controller: actionDataValueController,
     ));
-    formWidget.add(new RaisedButton(
+    formWidget.add(new ElevatedButton(
         onPressed: executePost,
-        color: Colors.blue,
-        textColor: Colors.white,
+        style: ElevatedButton.styleFrom(
+            primary: Colors.blue, onPrimary: Colors.white),
         child: Text(oldActivity == null ? 'Create' : 'Update')));
 
     return formWidget;
@@ -256,27 +277,30 @@ class PostActivityState extends State<PostActivity> {
     if (_image == null && _video == null) {
       return Row(
         children: [
-          FlatButton(
+          TextButton(
               child: Text('Add Image'),
               onPressed: () => getImage(),
-              color: Colors.orange),
+              style: TextButton.styleFrom(
+                  backgroundColor: Colors.orange, primary: Colors.white)),
           Padding(padding: EdgeInsets.only(left: 20.0)),
-          FlatButton(
+          TextButton(
               child: Text('Add Video'),
               onPressed: () => getVideo(),
-              color: Colors.orange),
+              style: TextButton.styleFrom(
+                  backgroundColor: Colors.orange, primary: Colors.white)),
         ],
       );
     } else if (_image != null) {
       return Column(children: [
         Container(
-            child: Image.file(_image, fit: BoxFit.fill),
+            child: Image.file(_image!, fit: BoxFit.fill),
             width: 300,
             height: 150),
-        FlatButton(
+        TextButton(
           child: Text('Remove'),
           onPressed: () => removeImage(),
-          color: Colors.orange,
+          style: TextButton.styleFrom(
+              backgroundColor: Colors.orange, primary: Colors.white),
         ),
       ]);
     } else if (_video != null) {
@@ -287,10 +311,11 @@ class PostActivityState extends State<PostActivity> {
                   Image.asset('images/video-thumbnail.jpg', fit: BoxFit.fill),
               width: 300,
               height: 150),
-          FlatButton(
+          TextButton(
               child: Text('Remove'),
               onPressed: () => removeVideo(),
-              color: Colors.orange),
+              style: TextButton.styleFrom(
+                  backgroundColor: Colors.orange, primary: Colors.white)),
         ],
       );
     }
@@ -299,35 +324,36 @@ class PostActivityState extends State<PostActivity> {
 
   executePost() async {
     ActivityContent content = new ActivityContent();
-    if (_text != null && _text.length > 0) {
+    if (_text != null && _text!.length > 0) {
       content.text = _text;
     }
-    if (_imageUrl != null && _imageUrl.length > 0) {
-      content.attachments.add(MediaAttachment.withImageUrl(_imageUrl));
+    if (_imageUrl != null && _imageUrl!.length > 0) {
+      content.attachments.add(MediaAttachment.withImageUrl(_imageUrl!));
     } else if (_image != null) {
-      final bytes = await File(_image.path).readAsBytes();
+      final bytes = await File(_image!.path).readAsBytes();
       content.attachments
           .add(MediaAttachment.withBase64Image(base64Encode(bytes)));
     }
     if (_video != null) {
-      final bytes = await File(_video.path).readAsBytes();
+      final bytes = await File(_video!.path).readAsBytes();
       content.attachments
           .add(MediaAttachment.withBase64Video(base64Encode(bytes)));
     }
     if (_customKey1 != null && _customValue1 != null) {
-      content.properties[_customKey1] = _customValue1;
+      content.properties[_customKey1!] = _customValue1!;
     }
     if (_customKey2 != null && _customValue2 != null) {
-      content.properties[_customKey2] = _customValue2;
+      content.properties[_customKey2!] = _customValue2!;
+    }
+
+    if (_labels != null) {
+      content.labels = _labels!.split(",");
     }
 
     if (_action != 'default') {
       String _actionKey1 = actionDataKeyController.text;
       String _actionValue1 = actionDataValueController.text;
-      if (_actionKey1 == null ||
-          _actionKey1.length == 0 ||
-          _actionValue1 == null ||
-          _actionValue1.length == 0) {
+      if (_actionKey1.length == 0 || _actionValue1.length == 0) {
         showAlert(context, 'Error', 'Action data key and value must be set');
         return;
       }
@@ -335,8 +361,8 @@ class PostActivityState extends State<PostActivity> {
           _action == 'custom' ? customActionController.text : _action;
       Map<String, String> actionData = {};
       actionData[_actionKey1] = _actionValue1;
-      content.activityButton =
-          ActivityButton(_buttonTitle, GetSocialAction(actionName, actionData));
+      content.activityButton = ActivityButton(
+          _buttonTitle ?? 'unknown', GetSocialAction(actionName!, actionData));
     }
     if (content.text == null &&
         content.attachments.isEmpty &&
@@ -349,7 +375,7 @@ class PostActivityState extends State<PostActivity> {
         ? PostActivityTarget.timeline()
         : target;
     if (PostActivityState.oldActivity == null) {
-      Communities.postActivity(content, postTarget).then((activity) {
+      Communities.postActivity(content, postTarget!).then((activity) {
         showAlert(context, 'Success',
             isComment ? 'Comment created' : 'Activity created');
       }).catchError((error) {
@@ -361,8 +387,7 @@ class PostActivityState extends State<PostActivity> {
         showError(context, errorMessage);
       });
     } else {
-      Communities.updateActivity(oldActivity.id, content).then((activity) {
-        oldActivity = activity;
+      Communities.updateActivity(oldActivity!.id, content).then((activity) {
         showAlert(context, 'Success',
             isComment ? 'Comment updated' : 'Activity updated');
       }).catchError((error) {

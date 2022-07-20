@@ -1,11 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:overlay_support/overlay_support.dart';
+
+void showOverlayAlert(String title, String message) async {
+  showSimpleNotification(
+    Text(message),
+    background: Colors.lime,
+    foreground: Colors.black,
+    autoDismiss: false,
+    trailing: Builder(builder: (context) {
+      return TextButton(
+          style: TextButton.styleFrom(
+              backgroundColor: Colors.red, primary: Colors.white),
+          onPressed: () {
+            OverlaySupportEntry.of(context)?.dismiss();
+          },
+          child: Text('Dismiss'));
+    }),
+  );
+}
 
 void showAlert(BuildContext context, String title, String message,
-    [Function onClose]) async {
+    [Function? onClose]) async {
   showDialog(
       context: context,
       builder: (BuildContext context) {
-        Widget closeButton = FlatButton(
+        Widget closeButton = TextButton(
           child: Text("Close"),
           onPressed: () {
             Navigator.pop(context);
@@ -28,7 +47,7 @@ void showError(BuildContext context, String message) async {
   showDialog(
       context: context,
       builder: (BuildContext context) {
-        Widget closeButton = FlatButton(
+        Widget closeButton = TextButton(
           child: Text("Close"),
           onPressed: () {
             Navigator.pop(context);
@@ -57,7 +76,7 @@ showDialogWithOptions(BuildContext context, String title,
   showDialog(
       context: context,
       builder: (BuildContext context) {
-        Widget cancelButton = FlatButton(
+        Widget cancelButton = TextButton(
           child: Text("Cancel"),
           onPressed: () {
             Navigator.pop(context);
@@ -66,7 +85,7 @@ showDialogWithOptions(BuildContext context, String title,
 
         List<Widget> children = options
             .map(
-              (input) => FlatButton(
+              (input) => TextButton(
                   child: Text(input),
                   onPressed: () =>
                       {Navigator.pop(context), onOptionSelected(input)}),
